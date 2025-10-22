@@ -49,6 +49,7 @@ class BankAccount {
             {
                 params: {
                     account_number: ACCOUNT_NUMBER,
+                    status: "pending",
                 },
             }
         );

@@ -133,7 +133,7 @@ class Driver {
                 capabilities: {
                     platformName: "Android",
                     "appium:automationName": "UiAutomator2",
-                    "appium:deviceName": "CQBYPVLFLZGM5X4L",
+                    "appium:deviceName": "RR8Y200XBGZ",
                     "appium:appPackage": "id.dana",
                     "appium:appActivity": "id.dana.home_v2.main.MainHomeActivity",
                     "appium:noReset": true,

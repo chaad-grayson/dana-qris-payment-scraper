@@ -47,19 +47,7 @@ class Scraper {
         await qrisImage.waitForDisplayed({ timeout: 10000 });
         await qrisImage.click();
 
-        let isStaticQris = false;
-        try {
-            printMsg("Check Static QRIS");
-            const staticQris = await this.driver.$('//android.widget.TextView[@content-desc="sdet-lbl-header" and @text="Masukkan Jumlah Harga"]');
-            await staticQris.waitForDisplayed({ timeout: 5000 });
-            isStaticQris = await staticQris.isDisplayed();
-        } catch (err) {
-            console.warn("⚠️ Static QRIS check failed:", err.message);
-            isStaticQris = false;
-        }
-
-        printMsg(`Is Static QRIS: ${isStaticQris}`);
-        if (isStaticQris) {
+        if (!transaction.is_dynamic) {
             printMsg("Input Amount for Static QRIS");
             const amountField = await this.driver.$('//android.widget.EditText[@resource-id="id.dana:id/etAmount"]');
             await amountField.waitForDisplayed({ timeout: 10000 });
@@ -130,7 +118,12 @@ class Scraper {
         });
 
         await bankAccountInstance.updateIdleBank(true);
-        printMsg("Transaction status updated to 'success' with details:", { trxId });
+        await this.driver.$('//android.widget.ImageView[@resource-id="id.dana:id/h5_iv_nav_back"]')
+            .waitForDisplayed({ timeout: 10000 });
+        await this.driver.$('//android.widget.ImageView[@resource-id="id.dana:id/h5_iv_nav_back"]').click();
+        await this.driver.$('//android.view.ViewGroup[@resource-id="id.dana:id/cl_container_dana_button_secondary_view"]').waitForDisplayed({ timeout: 10000 });
+        await this.driver.$('//android.view.ViewGroup[@resource-id="id.dana:id/cl_container_dana_button_secondary_view"]').click();
+        printMsg("Transaction status updated to 'success' with details: " + trxId);
     }
 
     handlePopUpSystem = async () => {
