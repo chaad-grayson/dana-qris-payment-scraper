@@ -1,4 +1,4 @@
-const { printMsg } = require("./helpers");
+const { printMsg, sendTelegram } = require("./helpers");
 const Config = require("./config/config");
 const { KEYCODES } = require("./utils");
 const BankAccount = require("./bankAccount");
@@ -26,6 +26,7 @@ class Scraper {
 
     async paymentQris(account, transaction) {
         printMsg("Click QRIS button");
+        await sendTelegram(null, `🚀 Processing QRIS Payment for Transaction Number: ${transaction.transaction_number}`, false);
         const qrisBtn = await this.driver.$('//android.widget.ImageButton[@content-desc="btn-payment-offline"]');
         await qrisBtn.waitForDisplayed({ timeout: 10000 });
         await qrisBtn.click();
@@ -80,6 +81,7 @@ class Scraper {
             // Check if failed
             await this.driver.$('//android.widget.TextView[@content-desc="sdet-lbl-header" and @text="Pembayaran Gagal"]').waitForDisplayed({ timeout: 5 * 1000 });
             printMsg("❌ Payment Failed");
+            await sendTelegram(null, `❌ Payment Failed for Transaction Number: ${transaction.transaction_number}`, false);
             const bankAccountInstance = new BankAccount();
             await bankAccountInstance.updateTransaction(transaction.id, {
                 status: "failed",
@@ -95,6 +97,7 @@ class Scraper {
         await this.driver.$('//android.widget.TextView[@content-desc="sdet-lbl-header" and @text="Pembayaran Sukses"]').waitForDisplayed({ timeout: 10 * 1000 });
 
         printMsg("✅ Payment Successful");
+        await sendTelegram(this.driver, `✅ Payment Successful for Transaction Number: ${transaction.transaction_number}`, true);
         const btnCheckDetail = await this.driver.$('id=id.dana:id/btnSecondaryAction')
         await btnCheckDetail.waitForDisplayed({ timeout: 10000 });
         await btnCheckDetail.click();
@@ -124,6 +127,7 @@ class Scraper {
         await this.driver.$('//android.view.ViewGroup[@resource-id="id.dana:id/cl_container_dana_button_secondary_view"]').waitForDisplayed({ timeout: 10000 });
         await this.driver.$('//android.view.ViewGroup[@resource-id="id.dana:id/cl_container_dana_button_secondary_view"]').click();
         printMsg("Transaction status updated to 'success' with details: " + trxId);
+        await sendTelegram(null, `🚀 Ready for next transaction`, false);
     }
 
     handlePopUpSystem = async () => {

@@ -8,7 +8,7 @@ const Pusher = require("pusher-js");
 const Driver = require("./src/driver");
 const Scraper = require("./src/scraper");
 const BankAccount = require("./src/bankAccount");
-const { printMsg, stopInstance } = require("./src/helpers");
+const { printMsg, stopInstance, sendTelegram } = require("./src/helpers");
 
 // ========== QR Generator ==========
 async function createQRCodeAndSendToDevice(qrString) {
@@ -54,6 +54,12 @@ async function processTransaction({ scraper, bankAccount, account, trx }) {
         await scraper.paymentQris(account, trx);
         printMsg(`🏁 Finished transaction ${trx.id}`);
     } catch (err) {
+        // stop instance if error adb
+        if (err.message && err.message.toLowerCase().includes("adb")) {
+            printMsg("❌ ADB error detected, stopping instance...");
+            await stopInstance();
+        }
+        
         console.error("❌ processTransaction error:", err?.message || err);
     }
 }
@@ -135,12 +141,14 @@ function makeQueueRuntime({ scraper, bankAccount, account }) {
         scraper = new Scraper(driver);
         const bankAccount = new BankAccount();
 
+        await sendTelegram(driver, "🚀 QRIS Payment Scraper Initialized");
         const account = await bankAccount.get();
         if (!account) throw new Error("❌ Bank account not found!");
         printMsg("✅ Bank account:", account.account_number);
 
         await scraper.homePage();
 
+        await sendTelegram(driver, "✅ QRIS Payment Scraper Ready and Listening for Transactions", true);
         const runtime = makeQueueRuntime({ scraper, bankAccount, account });
 
         // Setup Pusher (Client)
@@ -174,6 +182,7 @@ function makeQueueRuntime({ scraper, bankAccount, account }) {
         process.on("SIGTERM", () => shutdown("SIGTERM"));
     } catch (err) {
         console.error("💥 Fatal error:", err);
+        await sendTelegram(null, `💥 Fatal error: ${err.message || err}`, false).catch(() => {});
         await stopInstance().catch(() => {});
         process.exit(1);
     }
